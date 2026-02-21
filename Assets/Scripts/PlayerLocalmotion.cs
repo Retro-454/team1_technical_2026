@@ -54,4 +54,13 @@ public class PlayerLocalmotion : MonoBehaviour
 
         transform.rotation = playerRotation;
     }
+    public void HandleDash(float dashSpeed){
+        Vector3 dashDirection;
+        if(moveDirection != Vector3.zero){
+            dashDirection =  moveDirection.normalized;
+        }else{
+            dashDirection=transform.forward;
+        }
+        playerRigidBody.AddForce(dashDirection*dashSpeed,ForceMode.Impulse);
+    }
 }

@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class PlayerAttack : MonoBehaviour
 {
@@ -22,11 +23,11 @@ public class PlayerAttack : MonoBehaviour
     void HandleInput()
     {
         // Spacebar triggers light attack for testing
-        if (Input.GetKeyDown(KeyCode.Space))
+        if (Keyboard.current.spaceKey.wasPressedThisFrame)
         {
             LightAttack();
         }
-    }
+    } 
 
     void LightAttack()
     {

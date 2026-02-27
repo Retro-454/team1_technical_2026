@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class Input_manager : MonoBehaviour
 {
@@ -9,6 +10,8 @@ public class Input_manager : MonoBehaviour
     public Vector2 movementInput;
     public float verticalInput;
     public float horizontalInput;
+
+
     private void OnEnable()
     {
         if (player_Controls == null)
@@ -20,6 +23,12 @@ public class Input_manager : MonoBehaviour
 
         }
         player_Controls.Enable();
+
+    }
+    private void Update()
+    {
+        HandleAllInputs();
+        HandleShieldInput();
     }
     private void OnDisable()
     {
@@ -28,10 +37,26 @@ public class Input_manager : MonoBehaviour
     public void HandleAllInputs()
     {
         HandleMovementInput();
+
     }
     private void HandleMovementInput()
     {
         verticalInput = movementInput.y;
         horizontalInput = movementInput.x;
     }
+    private void HandleShieldInput()
+    {
+          // Toggle shield on K press
+        if (Keyboard.current.kKey.wasPressedThisFrame)
+        {
+            PlayerLocalmotion playerMotion = GetComponent<PlayerLocalmotion>();
+            if (playerMotion != null)
+            {
+                playerMotion.ToggleShield();
+            }
+        }
+        
+    }
+
+
 }

@@ -21,8 +21,12 @@ public class dash : MonoBehaviour
       
     }
     void Update(){
+         isShieldUp = moveScript.isShieldup;
+
         if(Mouse.current.rightButton.wasPressedThisFrame)
             TryDash();
+
+        
         }
     
      void TryDash()

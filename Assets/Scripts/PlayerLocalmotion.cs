@@ -13,6 +13,9 @@ public class PlayerLocalmotion : MonoBehaviour
 
     public float movementSpeed = 7;
     public float rotationSpeed = 15;
+    public GameObject shieldObject;
+    public bool isShieldup=false;
+    public float shieldMovementMult=0.5f;
 
     private void Awake()
     {
@@ -20,10 +23,12 @@ public class PlayerLocalmotion : MonoBehaviour
         playerRigidBody = GetComponent<Rigidbody>();
         cameraObject = Camera.main.transform;
     }
+
     public void HandleAllMovement()
     {
         HandleMovement();
         HandleRotation();
+      
     }
     private void HandleMovement()
     {
@@ -31,7 +36,8 @@ public class PlayerLocalmotion : MonoBehaviour
         moveDirection = moveDirection + cameraObject.right * inputmanager.horizontalInput;
         moveDirection.Normalize();
         moveDirection.y = 0;
-        moveDirection = moveDirection * movementSpeed;
+        float currentSpeed = isShieldup ? movementSpeed * shieldMovementMult : movementSpeed;
+        moveDirection = moveDirection * currentSpeed;
 
         Vector3 movementVelocity = moveDirection;
         playerRigidBody.linearVelocity = movementVelocity;
@@ -63,4 +69,13 @@ public class PlayerLocalmotion : MonoBehaviour
         }
         playerRigidBody.AddForce(dashDirection*dashSpeed,ForceMode.Impulse);
     }
+    public void ToggleShield()
+{
+    isShieldup = !isShieldup; // toggle state
+
+    if (shieldObject != null)
+        shieldObject.SetActive(isShieldup); // show/hide shield
+}
+
+
 }

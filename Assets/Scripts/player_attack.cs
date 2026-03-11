@@ -178,4 +178,25 @@ public class PlayerAttack : MonoBehaviour
 
         Debug.Log("Attack performed at " + attackOrigin);
     }
+   void OnDrawGizmos()
+{
+    // Light attack
+    Gizmos.color = Color.red;
+
+    Vector3 attackOrigin = transform.position + transform.forward.normalized * attackRange;
+
+    Gizmos.DrawWireSphere(attackOrigin, attackRadius);
+
+
+    // Heavy attack
+    Gizmos.color = Color.yellow;
+
+    Gizmos.DrawWireSphere(attackOrigin, heavyAttackRadius);
+
+
+    // Spin attack
+    Gizmos.color = Color.blue;
+
+    Gizmos.DrawWireSphere(transform.position, spinAttackRadius);
+}
 }

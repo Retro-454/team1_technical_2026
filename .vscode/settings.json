@@ -67,5 +67,5 @@
         "*.sln": "*.csproj",
         "*.slnx": "*.csproj"
     },
-    "dotnet.defaultSolution": "team1_technical_2026.slnx"
+    "dotnet.defaultSolution": "team1_technical.slnx"
 }

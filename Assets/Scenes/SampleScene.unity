@@ -466,6 +466,10 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 2741534044796413740, guid: 3006887081c6c47d5ae069517a0719a5, type: 3}
+      propertyPath: isShieldup
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2741534044796413740, guid: 3006887081c6c47d5ae069517a0719a5, type: 3}
       propertyPath: shieldObject
       value: 
       objectReference: {fileID: 718932070}
@@ -503,7 +507,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8205392518674629684, guid: 3006887081c6c47d5ae069517a0719a5, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0.6553
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 8205392518674629684, guid: 3006887081c6c47d5ae069517a0719a5, type: 3}
       propertyPath: m_LocalRotation.w

@@ -16,6 +16,7 @@ public class PlayerLocalmotion : MonoBehaviour
     public GameObject shieldObject;
     public bool isShieldup=false;
     public float shieldMovementMult=0.5f;
+    public bool canMove = true;
 
     private void Awake()
     {
@@ -41,6 +42,12 @@ public class PlayerLocalmotion : MonoBehaviour
 
         Vector3 movementVelocity = moveDirection;
         playerRigidBody.linearVelocity = movementVelocity;
+        if (!canMove)
+    {
+        playerRigidBody.linearVelocity = Vector3.zero;
+        return;
+    }
+        
     }
     private void HandleRotation()
     {
@@ -59,8 +66,12 @@ public class PlayerLocalmotion : MonoBehaviour
         Quaternion playerRotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
 
         transform.rotation = playerRotation;
+        if (!canMove)
+        return;
     }
     public void HandleDash(float dashSpeed){
+        if (!canMove)
+        return;
         Vector3 dashDirection;
         if(moveDirection != Vector3.zero){
             dashDirection =  moveDirection.normalized;

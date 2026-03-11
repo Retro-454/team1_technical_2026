@@ -1,44 +1,42 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.AdaptivePerformance;
 using UnityEngine.InputSystem;
 
 public class PlayerAttack : MonoBehaviour
 {
-    [Header("Attack Settings")]
-    public int lightAttackDamage = 10;
-    public float attackCooldown = 0.6f;
+    [Header("Light Attack")]
+    public int lightDamage = 10;
+    public float lightCooldown = 0.6f;
+    public float lightRange = 2f;
+    public float lightRadius = 0.75f;
 
-    [Header("Hitbox Settings")]
-    public float attackRange = 2f;
-    public float attackRadius = 0.75f;
+    [Header("Heavy Attack")]
+    public int heavyDamage = 25;
+    public float heavyCooldown = 1.2f;
+    public float heavyChargeTime = 0.8f;
+    public float heavyRadius = 1.2f;
 
-    private float lastAttackTime;
+    [Header("Spin Attack")]
+    public float spinRadius = 2f;
+    public float spinDuration = 0.8f;
 
-    //Heavy attack
-    public int heavyAttackDamage = 25;
-    public float heavyAttackCooldown = 1.2f;
-    public float heavyAttackChargeTime = 0.8f;
+    [Header("Combo Settings")]
+    public float comboResetTime = 3f;
 
-    //spin att
-    public float spinAttackRadius = 2f;
-    public float spinAttackDuration = 0.8f;
-
-    private int heavyAttackCounter = 0;
-    private bool isHeavyAttacking = false;
-
-    PlayerLocalmotion playerMovement;
-    Rigidbody playerRigidBody;
-    public float heavyComboResetTime = 3f;
+    private float lastLightTime;
     private float lastHeavyTime;
-    public float heavyAttackRadius = 1.2f;
+
+    private int heavyComboCount;
+    private bool isHeavyAttacking;
+
+    PlayerLocalmotion movement;
+    Rigidbody rb;
 
     void Awake()
     {
-    playerMovement = GetComponent<PlayerLocalmotion>();
-     playerRigidBody = GetComponent<Rigidbody>();
-    }   
+        movement = GetComponent<PlayerLocalmotion>();
+        rb = GetComponent<Rigidbody>();
+    }
 
     void Update()
     {
@@ -47,156 +45,140 @@ public class PlayerAttack : MonoBehaviour
 
     void HandleInput()
     {
-        // Spacebar triggers light attack for testing
         if (Keyboard.current.spaceKey.wasPressedThisFrame)
-        {
-            LightAttack();
-        }
+            TryLightAttack();
+
         if (Keyboard.current.hKey.wasPressedThisFrame)
-        {
-            HeavyAttack();
-        }
-    } 
-    void HeavyAttack()
+            TryHeavyAttack();
+    }
+
+    // ------------------------
+    // LIGHT ATTACK
+    // ------------------------
+
+    void TryLightAttack()
     {
-        if (Time.time < lastAttackTime + heavyAttackCooldown || isHeavyAttacking)
-        {
+        if (Time.time < lastLightTime + lightCooldown)
             return;
-        }
-            
+
+        lastLightTime = Time.time;
+
+        Vector3 origin = GetForwardAttackOrigin(lightRange);
+        DealDamage(origin, lightRadius, lightDamage);
+
+        Debug.Log("Light Attack");
+    }
+
+    // ------------------------
+    // HEAVY ATTACK
+    // ------------------------
+
+    void TryHeavyAttack()
+    {
+        if (Time.time < lastHeavyTime + heavyCooldown || isHeavyAttacking)
+            return;
 
         StartCoroutine(HeavyAttackRoutine());
-
-        
     }
+
     IEnumerator HeavyAttackRoutine()
     {
-        isHeavyAttacking=true;
-        playerMovement.canMove = false;
-        
+        isHeavyAttacking = true;
+        movement.canMove = false;
 
-        Debug.Log("Charging Heavy Attack");
-        yield return new WaitForSeconds(heavyAttackChargeTime);
-        heavyAttackCounter++;
+        Debug.Log("Charging Heavy Attack...");
+        yield return new WaitForSeconds(heavyChargeTime);
 
-        if (heavyAttackCounter%3==0)
-        {
-           yield return StartCoroutine(SpinAttackRoutine());
-        }
+        HandleComboReset();
+
+        heavyComboCount++;
+
+        if (heavyComboCount % 3 == 0)
+            yield return SpinAttackRoutine();
         else
+            PerformHeavyAttack();
+
+        lastHeavyTime = Time.time;
+
+        movement.canMove = true;
+        isHeavyAttacking = false;
+    }
+
+    void PerformHeavyAttack()
+    {
+        Vector3 origin = GetForwardAttackOrigin(lightRange);
+        DealDamage(origin, heavyRadius, heavyDamage);
+
+        Debug.Log("Heavy Attack");
+    }
+
+    // ------------------------
+    // SPIN ATTACK
+    // ------------------------
+
+    IEnumerator SpinAttackRoutine()
+    {
+        float elapsed = 0;
+
+        while (elapsed < spinDuration)
         {
-            PerformAttack(heavyAttackDamage,heavyAttackRadius);
+            rb.linearVelocity = Vector3.zero;
+            transform.Rotate(Vector3.up * 720 * Time.deltaTime);
+
+            elapsed += Time.deltaTime;
+            yield return null;
         }
 
-        if (Time.time > lastHeavyTime + heavyComboResetTime)
-        {
-         heavyAttackCounter = 0;
-        }
-        lastHeavyTime=Time.time;
-        heavyAttackCounter++;
-        playerMovement.canMove = true;
-        isHeavyAttacking=false;
-    }
-   
-   IEnumerator SpinAttackRoutine()
-{
-    playerRigidBody.linearVelocity = Vector3.zero;
+        DealDamage(transform.position, spinRadius, heavyDamage);
 
-    float elapsed = 0;
-    GameObject debugSphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-    debugSphere.transform.position = transform.position;
-    debugSphere.transform.localScale = Vector3.one * spinAttackRadius * 2;
-
-    Material mat = new Material(Shader.Find("Standard"));
-    mat.color = Color.blue;
-    debugSphere.GetComponent<MeshRenderer>().material = mat;
-
-        // disable physics
-    debugSphere.GetComponent<Collider>().enabled = false;
-
-    Destroy(debugSphere, spinAttackDuration);       
-
-    while (elapsed < spinAttackDuration)
-    {
-        playerRigidBody.linearVelocity = Vector3.zero;
-        transform.Rotate(Vector3.up * 720 * Time.deltaTime);
-
-        elapsed += Time.deltaTime;
-        yield return null;
+        Debug.Log("Spin Attack!");
     }
 
-    // Damage happens ONCE at the end
-    Collider[] hits = Physics.OverlapSphere(transform.position, spinAttackRadius);
+    // ------------------------
+    // DAMAGE SYSTEM
+    // ------------------------
 
-    foreach (Collider hit in hits)
+    void DealDamage(Vector3 origin, float radius, int damage)
     {
-        if (hit.CompareTag("enemy"))
+        Collider[] hits = Physics.OverlapSphere(origin, radius);
+
+        foreach (Collider hit in hits)
         {
-            hit.GetComponent<Enemyheath>()?.takedamage(heavyAttackDamage);
+            if (hit.CompareTag("enemy"))
+            {
+                hit.GetComponent<Enemyheath>()?.takedamage(damage);
+            }
         }
     }
 
-    Debug.Log("Spin Attack!");
-}
-    void LightAttack()
+    Vector3 GetForwardAttackOrigin(float distance)
     {
-        // Prevent spamming attacks
-        if (Time.time < lastAttackTime + attackCooldown)
-            return;
+        Vector3 dir = transform.forward;
+        dir.y = 0;
+        dir.Normalize();
 
-        lastAttackTime = Time.time;
-
-        PerformAttack(lightAttackDamage,attackRange);
+        return transform.position + dir * distance;
     }
 
-    void PerformAttack(int damage,float radius)
+    void HandleComboReset()
     {
-        // Player forward direction
-        Vector3 direction = transform.forward;
-        direction.y = 0;
-        direction.Normalize();
-
-        // Attack position slightly above player base
-        Vector3 attackOrigin = transform.position + transform.forward.normalized * attackRange;
-
-        
-        // --- DEBUG HITBOX VISUAL ---
-        GameObject debugCube = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        debugCube.transform.position = attackOrigin;
-        debugCube.transform.localScale = new Vector3(attackRadius * 2, 0.5f, attackRadius * 2);
-
-        // Make it red so you can see it
-       Material mat = new Material(Shader.Find("Standard"));
-       mat.color = Color.red;
-        debugCube.GetComponent<MeshRenderer>().material = mat;
-      Destroy(debugCube, 0.5f); // disappear after 0.5 seconds */
-
-        // --- DAMAGE LOGIC ---
-        Collider[] hits = Physics.OverlapSphere(attackOrigin, radius);
-
-        foreach (Collider hit in hits) { if (hit.CompareTag("enemy")) { hit.GetComponent<Enemyheath>()?.takedamage(damage); } } 
-
-        Debug.Log("Attack performed at " + attackOrigin);
+        if (Time.time > lastHeavyTime + comboResetTime)
+            heavyComboCount = 0;
     }
-   void OnDrawGizmos()
-{
-    // Light attack
-    Gizmos.color = Color.red;
 
-    Vector3 attackOrigin = transform.position + transform.forward.normalized * attackRange;
+    // ------------------------
+    // DEBUG GIZMOS
+    // ------------------------
 
-    Gizmos.DrawWireSphere(attackOrigin, attackRadius);
+    void OnDrawGizmos()
+    {
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(GetForwardAttackOrigin(lightRange), lightRadius);
 
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireSphere(GetForwardAttackOrigin(lightRange), heavyRadius);
 
-    // Heavy attack
-    Gizmos.color = Color.yellow;
-
-    Gizmos.DrawWireSphere(attackOrigin, heavyAttackRadius);
-
-
-    // Spin attack
-    Gizmos.color = Color.blue;
-
-    Gizmos.DrawWireSphere(transform.position, spinAttackRadius);
-}
+        Gizmos.color = Color.blue;
+        Gizmos.DrawWireSphere(transform.position, spinRadius);
+    }
 }

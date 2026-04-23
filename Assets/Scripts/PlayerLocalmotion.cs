@@ -1,92 +1,118 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using Quaternion = UnityEngine.Quaternion;
-using Vector3 = UnityEngine.Vector3;
 
 public class PlayerLocalmotion : MonoBehaviour
 {
     Vector3 moveDirection;
-    Input_manager inputmanager;
-    Transform cameraObject;
-    Rigidbody playerRigidBody;
 
-    public float movementSpeed = 7;
-    public float rotationSpeed = 15;
+    InputManager inputManager;
+    
+    Transform cameraTransform;
+    Rigidbody rb;
+
+
+    [Header("Movement")]
+    public float movementSpeed = 7f;
+    public float rotationSpeed = 15f;
+
+    [Header("Shield")]
     public GameObject shieldObject;
-    public bool isShieldup=false;
-    public float shieldMovementMult=0.5f;
+    public bool isShieldup = false;
+    public float shieldMovementMultiplier = 0.5f;
+
+    [Header("State")]
     public bool canMove = true;
 
-    private void Awake()
+    void Awake()
     {
-        inputmanager = GetComponent<Input_manager>();
-        playerRigidBody = GetComponent<Rigidbody>();
-        cameraObject = Camera.main.transform;
+        inputManager = GetComponent<InputManager>();
+        rb = GetComponent<Rigidbody>();
+        cameraTransform = Camera.main.transform;
     }
+
+    // ------------------------
+    // MAIN MOVEMENT LOOP
+    // ------------------------
 
     public void HandleAllMovement()
     {
+        if (!canMove)
+        {
+            rb.linearVelocity = Vector3.zero;
+            return;
+        }
+
+        CalculateMoveDirection();
         HandleMovement();
         HandleRotation();
-      
     }
-    private void HandleMovement()
+
+    // ------------------------
+    // MOVEMENT
+    // ------------------------
+
+    void CalculateMoveDirection()
     {
-        moveDirection = cameraObject.forward * inputmanager.verticalInput;
-        moveDirection = moveDirection + cameraObject.right * inputmanager.horizontalInput;
-        moveDirection.Normalize();
+        moveDirection =
+            cameraTransform.forward * inputManager.verticalInput +
+            cameraTransform.right * inputManager.horizontalInput;
+
         moveDirection.y = 0;
-        float currentSpeed = isShieldup ? movementSpeed * shieldMovementMult : movementSpeed;
-        moveDirection = moveDirection * currentSpeed;
+        moveDirection.Normalize();
+    }
 
-        Vector3 movementVelocity = moveDirection;
-        playerRigidBody.linearVelocity = movementVelocity;
-        if (!canMove)
+    void HandleMovement()
     {
-        playerRigidBody.linearVelocity = Vector3.zero;
-        return;
+        float speed = isShieldup
+            ? movementSpeed * shieldMovementMultiplier
+            : movementSpeed;
+
+        rb.linearVelocity = moveDirection * speed;
     }
-        
-    }
-    private void HandleRotation()
+
+    // ------------------------
+    // ROTATION
+    // ------------------------
+
+    void HandleRotation()
     {
-        Vector3 targetDirection = Vector3.zero;
-        targetDirection = cameraObject.forward * inputmanager.verticalInput;
-        targetDirection = targetDirection + cameraObject.right * inputmanager.horizontalInput;
-        targetDirection.Normalize();
-        targetDirection.y = 0;
+        if (moveDirection == Vector3.zero)
+            return;
 
-        if (targetDirection == Vector3.zero)
-        {
-            targetDirection = transform.forward;
-        }
+        Quaternion targetRotation = Quaternion.LookRotation(moveDirection);
 
-        Quaternion targetRotation = Quaternion.LookRotation(targetDirection);
-        Quaternion playerRotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
-
-        transform.rotation = playerRotation;
-        if (!canMove)
-        return;
+        transform.rotation = Quaternion.Slerp(
+            transform.rotation,
+            targetRotation,
+            rotationSpeed * Time.deltaTime
+        );
     }
-    public void HandleDash(float dashSpeed){
+
+    // ------------------------
+    // DASH
+    // ------------------------
+
+    public void HandleDash(float dashSpeed)
+    {
         if (!canMove)
-        return;
-        Vector3 dashDirection;
-        if(moveDirection != Vector3.zero){
-            dashDirection =  moveDirection.normalized;
-        }else{
-            dashDirection=transform.forward;
-        }
-        playerRigidBody.AddForce(dashDirection*dashSpeed,ForceMode.Impulse);
+            return;
+
+        Vector3 dashDirection =
+            moveDirection != Vector3.zero
+            ? moveDirection
+            : transform.forward;
+
+        rb.AddForce(dashDirection.normalized * dashSpeed, ForceMode.Impulse);
     }
+
+    // ------------------------
+    // SHIELD
+    // ------------------------
+
     public void ToggleShield()
-{
-    isShieldup = !isShieldup; // toggle state
+    {
+        isShieldup = !isShieldup;
 
-    if (shieldObject != null)
-        shieldObject.SetActive(isShieldup); // show/hide shield
-}
-
-
+        if (shieldObject != null)
+            shieldObject.SetActive(isShieldup);
+    }
 }

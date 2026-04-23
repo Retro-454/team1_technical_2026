@@ -4,13 +4,17 @@ using UnityEngine;
 
 public class Playermanager : MonoBehaviour
 {
-    Input_manager inputManager;
-    PlayerLocalmotion playerlocalmotion;
+    InputManager inputManager;
+    PlayerLocalmotion playerlocalmotion;//old
+    PlayerTankMotion playerTankMotion;     // new
 
+
+    public bool useTankControls = true;    // flip, right now for testing
     private void Awake()
     {
-        inputManager = GetComponent<Input_manager>();
+        inputManager = GetComponent<InputManager>();
         playerlocalmotion = GetComponent<PlayerLocalmotion>();
+        playerTankMotion = GetComponent<PlayerTankMotion>();
     }
     private void Update()
     {
@@ -18,7 +22,10 @@ public class Playermanager : MonoBehaviour
     }
     private void FixedUpdate()
     {
-        playerlocalmotion.HandleAllMovement();
+      if (useTankControls)
+            playerTankMotion.HandleAllMovement();
+        else
+            playerlocalmotion.HandleAllMovement();
         
     }
 }
